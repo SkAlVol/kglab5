@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="uk">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Three.js Коробка з відкриваючою кришкою</title>
+    <style>
+      body {
+        margin: 0;
+        overflow: hidden;
+        background-color: white; /* Встановлюємо білий фон для сторінки */
+      }
+    </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  </head>
+  <body>
+    <script>
+      // Ініціалізація сцени, камери та рендера
+      const scene = new THREE.Scene();
+      scene.background = new THREE.Color(0xffffff); // Білий фон для сцени
+      const camera = new THREE.PerspectiveCamera(
+        90,
+        window.innerWidth / window.innerHeight,
+        0.1,
+        1000
+      );
+      const renderer = new THREE.WebGLRenderer();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      document.body.appendChild(renderer.domElement);
+
+      // Освітлення
+      const light = new THREE.DirectionalLight(0xffffff, 1);
+      light.position.set(5, 10, 7.5);
+      scene.add(light);
+
+      // Геометрія та матеріали для ящика та кришки
+      const crateGeometry = new THREE.BoxGeometry(1, 1, 1); // Геометрія ящика
+      const lidGeometry = new THREE.BoxGeometry(1, 0.05, 1); // Геометрія кришки
+
+      // Матеріали для ящика та кришки
+      const crateMaterials = [
+        new THREE.MeshPhongMaterial({ color: 0xff0000 }), // Червоний
+        new THREE.MeshPhongMaterial({ color: 0x00ff00 }), // Зелений
+        new THREE.MeshPhongMaterial({ color: 0x0000ff }), // Синій
+        new THREE.MeshPhongMaterial({ color: 0xffff00 }), // Жовтий
+        new THREE.MeshPhongMaterial({ color: 0xff00ff }), // Фіолетовий
+        new THREE.MeshPhongMaterial({ color: 0x00ffff }), // Голубий
+      ];
+      const lidMaterial = new THREE.MeshPhongMaterial({ color: 0x8b4513 }); // Кришка
+
+      // Створення ящика
+      const crate = new THREE.Mesh(crateGeometry, crateMaterials);
+
+      // Створення точки обертання кришки
+      const lidPivot = new THREE.Object3D();
+      lidPivot.position.set(0, 0.5, -0.5); // Позиція точки обертання на задньому верхньому ребрі ящика
+
+      // Створення кришки
+      const lid = new THREE.Mesh(lidGeometry, lidMaterial);
+      lid.position.set(0, 0.02, 0.5); // Зміщуємо кришку відносно точки обертання
+      lidPivot.add(lid); // Додаємо кришку до точки обертання
+
+      // Група для ящика
+      const crateGroup = new THREE.Group();
+      crateGroup.add(crate);
+      crateGroup.add(lidPivot); // Додаємо точку обертання кришки в групу ящика
+
+      // Позиціонування ящика та кришки в сцені
+      scene.add(crateGroup);
+
+      // Камера
+      camera.position.set(1, 1, 1);
+      camera.lookAt(0, 0, 0);
+
+      // Управління станом
+      let crateRotationY = 0;
+      let lidOpenAngle = 0;
+      const lidMaxAngle = Math.PI / 2; // Максимальне відкриття кришки - 90 градусів
+      let targetCrateRotationY = 0;
+      let targetLidOpenAngle = 0;
+
+      // Обробка натискань клавіш
+      function handleKeyDown(event) {
+        switch (event.key) {
+          case "ArrowLeft":
+            targetCrateRotationY -= 0.1;
+            break;
+          case "ArrowRight":
+            targetCrateRotationY += 0.1;
+            break;
+          case "ArrowUp":
+            targetLidOpenAngle = Math.min(
+              targetLidOpenAngle + 0.05,
+              lidMaxAngle
+            );
+            break;
+          case "ArrowDown":
+            targetLidOpenAngle = Math.max(targetLidOpenAngle - 0.05, 0);
+            break;
+        }
+      }
+
+      window.addEventListener("keydown", handleKeyDown);
+
+      // Анімація
+      function animate() {
+        requestAnimationFrame(animate);
+
+        // Плавне рухання
+        crateRotationY += (targetCrateRotationY - crateRotationY) * 0.1;
+        lidOpenAngle += (targetLidOpenAngle - lidOpenAngle) * 0.1;
+
+        // Обертання ящика навколо осі Y
+        crateGroup.rotation.y = crateRotationY;// Обертання кришки навколо осі X (відкриття кришки по ходу годинникової стрілки)
+        lidPivot.rotation.x = -lidOpenAngle;
+
+        renderer.render(scene, camera);
+      }
+
+      animate();
+    </script>
+  </body>
+</html>
